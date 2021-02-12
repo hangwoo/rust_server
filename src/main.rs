@@ -5,16 +5,21 @@ use std::fs;
 
 fn handle_connection(mut stream: TcpStream) {
     let mut buffer = [0; 512];
-    let contents = fs::read_to_string("hello.html").unwrap();
-
     stream.read(&mut buffer).unwrap();
 
-    println!("{}", String::from_utf8_lossy(&buffer));
+    let get_request = b"GET / HTTP/1.1\r\n";
 
-    let response = format!("HTTP/1.1 200 OK\r\n\r\n{}", contents);
-
-    stream.write(response.as_bytes()).unwrap();
-    stream.flush().unwrap();
+    if buffer.starts_with(get_request) {
+        let contents = fs::read_to_string("hello.html").unwrap();
+        let response = format!("HTTP/1.1 200 OK\r\n\r\n{}", contents);
+        stream.write(response.as_bytes()).unwrap();
+        stream.flush().unwrap();
+    } else {
+        let contents = fs::read_to_string("404.html").unwrap();
+        let response = format!("HTTP/1.1 404 NOT FOUND\r\n\r\n{}", contents);
+        stream.write(response.as_bytes()).unwrap();
+        stream.flush().unwrap();
+    }
 }
 
 fn main() {
